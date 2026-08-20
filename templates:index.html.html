@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Liquid Glass AI Trader</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="app">
+    <header class="glass topbar">
+      <div class="logo">
+        <div class="logo-icon">◈</div>
+        <div>
+          <h1>Liquid Glass</h1>
+          <span class="subtitle">AI Paper Trading</span>
+        </div>
+      </div>
+      <div class="indices" id="indicesBar">
+        <div class="idx"><span class="idx-name">S&P</span><span class="idx-val" id="idxSP">—</span></div>
+        <div class="idx"><span class="idx-name">DOW</span><span class="idx-val" id="idxDOW">—</span></div>
+        <div class="idx"><span class="idx-name">NASDAQ</span><span class="idx-val" id="idxNAS">—</span></div>
+        <div class="idx"><span class="idx-name">VIX</span><span class="idx-val" id="idxVIX">—</span></div>
+      </div>
+      <div class="header-controls">
+        <div class="status-pill" id="robotStatus"><span class="dot"></span><span id="statusText">Fermo</span></div>
+        <button class="btn btn-primary" id="btnStart" onclick="toggleRobot()">Avvia Robot</button>
+        <button class="btn btn-ghost" onclick="manualScan()">Scansiona</button>
+        <button class="btn btn-danger" onclick="resetPortfolio()">Reset</button>
+      </div>
+    </header>
+    <section class="kpi-row">
+      <div class="glass kpi"><div class="kpi-label">Capitale Totale</div><div class="kpi-value" id="kpiCapital">€10.000</div><div class="kpi-sub" id="kpiCash">Cash: €10.000</div></div>
+      <div class="glass kpi"><div class="kpi-label">P&amp;L Totale</div><div class="kpi-value" id="kpiPnl">€0,00</div><div class="kpi-sub" id="kpiPnlPct">+0,00%</div></div>
+      <div class="glass kpi"><div class="kpi-label">P&amp;L Realizzato</div><div class="kpi-value" id="kpiRealized">€0,00</div><div class="kpi-sub">Trade chiusi</div></div>
+      <div class="glass kpi"><div class="kpi-label">Posizioni</div><div class="kpi-value" id="kpiPositions">0</div><div class="kpi-sub" id="kpiLastScan">—</div></div>
+      <div class="glass kpi"><div class="kpi-label">Rischio</div><div class="kpi-value">10%</div><div class="kpi-sub">Stop -5% · &gt;75%</div></div>
+    </section>
+    <div class="main-grid">
+      <div class="col-left">
+        <div class="glass panel">
+          <div class="panel-header"><h2>Andamento Capitale</h2><span class="badge">LIVE</span></div>
+          <div class="chart-wrap"><canvas id="equityChart"></canvas></div>
+        </div>
+        <div class="glass panel">
+          <div class="panel-header"><h2>Posizioni Aperte</h2></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Ticker</th><th>Qty</th><th>Medio</th><th>Attuale</th><th>Valore</th><th>P&amp;L</th></tr></thead>
+              <tbody id="positionsBody"><tr><td colspan="6" class="empty">Nessuna posizione</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="glass panel">
+          <div class="panel-header"><h2>Storico Trade</h2></div>
+          <div class="table-wrap history-scroll">
+            <table>
+              <thead><tr><th>Ora</th><th>Ticker</th><th>Azione</th><th>Qty</th><th>Prezzo</th><th>P&amp;L</th></tr></thead>
+              <tbody id="historyBody"><tr><td colspan="6" class="empty">Nessun trade</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-center">
+        <div class="glass panel">
+          <div class="panel-header"><h2>Watchlist AI · Scansione Live</h2><span class="badge badge-blue" id="scanBadge">In attesa</span></div>
+          <div class="table-wrap scan-scroll">
+            <table>
+              <thead><tr><th>Ticker</th><th>Prob</th><th>Prezzo</th><th>Segnale</th><th>Note</th></tr></thead>
+              <tbody id="scanBody"><tr><td colspan="5" class="empty">Premi Scansiona o avvia il robot</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="glass panel">
+            <div class="panel-header"><h2>Top Probabilità</h2></div>
+            <div id="gainersList" class="mini-list"></div>
+          </div>
+          <div class="glass panel">
+            <div class="panel-header"><h2>Segnali Deboli</h2></div>
+            <div id="losersList" class="mini-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-right">
+        <div class="glass panel">
+          <div class="panel-header"><h2>AI Insight</h2></div>
+          <div class="ai-box" id="aiInsight">
+            <p>Robot basato su RSI + MACD + EMA50.</p>
+            <p>17 titoli: Tech, Rare Earth/Magneti, Growth low-price.</p>
+            <p>Entra &gt;75% · Esce &lt;45% o stop -5%.</p>
+          </div>
+        </div>
+        <div class="glass panel">
+          <div class="panel-header"><h2>Universo</h2></div>
+          <div class="cat-list">
+            <div class="cat"><span class="cat-dot tech"></span> Tech Giants <strong>7</strong></div>
+            <div class="cat"><span class="cat-dot rare"></span> Critical Materials <strong>5</strong></div>
+            <div class="cat"><span class="cat-dot growth"></span> Low-Price Growth <strong>5</strong></div>
+          </div>
+        </div>
+        <div class="glass panel">
+          <div class="panel-header"><h2>Parametri</h2></div>
+          <div class="config-grid">
+            <div class="cfg"><span>Rischio</span><strong>10%</strong></div>
+            <div class="cfg"><span>Entrata</span><strong>&gt;75%</strong></div>
+            <div class="cfg"><span>Uscita</span><strong>&lt;45%</strong></div>
+            <div class="cfg"><span>Stop</span><strong>-5%</strong></div>
+            <div class="cfg"><span>Capitale</span><strong>€10k</strong></div>
+            <div class="cfg"><span>Tickers</span><strong>17</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
